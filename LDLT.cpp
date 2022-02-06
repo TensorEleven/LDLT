@@ -138,25 +138,25 @@ void LDLT::factrizeA(){
         L[i][i] = 1;
         Lt[i][i] = 1;
 
-        for(int j=0;j<=i;j++){
+        for(int j=0;j<i;j++){
             sum=0;
-            for(int k=0;k<j-1;k++){
-                sum += D[k]*L[j][k]*L[j][k];
+            for(int k=0;k<=j-1;k++){
+                sum += L[i][k]*D[k]*L[j][k];
             }
-            
+            L[i][j] = (A[i][j] - sum)/D[j];
             // get D[i]
-            D[j] = A[j][j] - sum;
+        }
+
+            sum = 0;
             //cout << D[j] << " ";
 
             // get L[i][j]
-            sum = 0;
-            for(int k=0;k<(j);k++){
-                sum += L[i][k]*D[k]*L[j][k];
+            for(int k=0;k<=(i-1);k++){
+                sum += L[i][k]*D[k]*L[i][k];
             }
+            D[i] = A[i][i] - sum;
 
-            L[i][j] = (A[i][j] - sum)/D[j];
             //cout << L[i][j] << " ";
-        }
         //cout << endl;
     }
 }
@@ -165,12 +165,12 @@ void LDLT::computeZ(){
     float sum =0;
     for(int i=0;i<dim;i++){
         sum = 0;
-        for(int k=0;k<i-1;k++){
+        for(int k=0;k<=i-1;k++){
             sum+= L[i][k]*z[k];
         }
         z[i] = b[i] - sum;
     }
-} 
+}
 
 void LDLT::computeY(){
     for(int i=0;i<dim;i++){
@@ -191,6 +191,7 @@ void LDLT::computeX(){
 void LDLT::solve(){
     loadAb();
     factrizeA();
+    displayMat(L);
     computeZ();
     computeY();
     computeX();
