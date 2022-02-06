@@ -1,3 +1,11 @@
+/*
+ *  RATEFIARISON 
+ *  Harivony Lalatiana
+ * 
+ *  Factorisation LDLt
+ * 
+ */
+
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -38,37 +46,11 @@ public:
 int main (){
     LDLT solver;
     solver.solve();
-    // solver.loadAb();
-    // cout << "La matrice A :" << endl;
-    // displayMat(solver.A);
-    // cout << "Le vecteur b :" << endl;
-    // displayVec(solver.b);
-
-    // // solver.factrizeA();
-    // // solver.computeZ();
-
-    // // cout << " D :" << endl;
-    // // // displayVec(solver.D);
-
-    // // cout << " z :" << endl;
-    // // displayVec(solver.z);
-
-    // solver.computeY();
-    // // cout << " y :" << endl;
-    // // displayVec(solver.y);
-
-    // solver.computeX();
-    // cout << " x :" << endl;
-    // displayVec(solver.x);
-    // // cout << endl;
-    // // displayMat(solver.L);
-    // // cout << endl;
-    // // displayMat(solver.Lt);
 
     return 0;
 }
 
-/*****  ******/
+/***** MATRICE - VECTEUR ******/
 
 float **newMat(int rows, int cols){ //allocation dynamique de tableau rows*cols
     float **mat(NULL);
@@ -98,6 +80,7 @@ void displayVec (float* v){         //afficher un vecteur
         cout << "[" << v[i] << "]" << endl;
     }
 }
+
 
 /***** LDLT ******/
 
@@ -150,12 +133,13 @@ void LDLT::loadAb(){
 }
 
 void LDLT::factrizeA(){
+    float sum = 0;
     for(int i=0;i<dim;i++){
         L[i][i] = 1;
         Lt[i][i] = 1;
 
         for(int j=0;j<=i;j++){
-            float sum = 0;
+            sum=0;
             for(int k=0;k<j-1;k++){
                 sum += D[k]*L[j][k]*L[j][k];
             }
@@ -212,3 +196,35 @@ void LDLT::solve(){
     computeX();
     displayVec(x);
 }
+
+    //
+    /*
+    {
+     solver.loadAb();
+    // cout << "La matrice A :" << endl;
+    // displayMat(solver.A);
+    // cout << "Le vecteur b :" << endl;
+    // displayVec(solver.b);
+
+    // // solver.factrizeA();
+    // // solver.computeZ();
+
+    // // cout << " D :" << endl;
+    // // // displayVec(solver.D);
+
+    // // cout << " z :" << endl;
+    // // displayVec(solver.z);
+
+    // solver.computeY();
+    // // cout << " y :" << endl;
+    // // displayVec(solver.y);
+
+    // solver.computeX();
+    // cout << " x :" << endl;
+    // displayVec(solver.x);
+    // // cout << endl;
+    // // displayMat(solver.L);
+    // // cout << endl;
+    // // displayMat(solver.Lt);
+    // 
+    }*/
