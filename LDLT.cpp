@@ -192,6 +192,8 @@ void LDLT::solve(){
     loadAb();
     factrizeA();
     displayMat(L);
+    displayVec(D);
+
     computeZ();
     computeY();
     computeX();
