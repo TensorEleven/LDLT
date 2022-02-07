@@ -14,6 +14,7 @@ using namespace std;
 
 
 int dim(10);
+
 float **newMat(int rows, int cols);
 float *newVec(int n);
 void displayMat(float** mat);
@@ -26,19 +27,24 @@ public:
 
     void loadAb();
     void factrizeA();
-    void computeZ();
-    void computeY();
-    void computeX();
+
+    // getter
+    float** getA(){return A;}
+    float* getb(){return b;}
+    float** getD(){return D;}
+    float* getX(){return x;}
+
+    void solveTriangInf(float **mat, float *vec); 
+    void transpose(float **mat);
+	void solveTriangSup(float **mat, float *vec);
+
     void solve();
 
 // Attributs
     float** A;
     float** L;
-    float** Lt;
-    float* D;
+    float** D;
     float* x;   // la solution
-    float* y;   
-    float* z;
 
     float* b;   // second membre
 };
@@ -87,23 +93,18 @@ void displayVec (float* v){         //afficher un vecteur
 LDLT::LDLT(){
     A = newMat(dim,dim);
     L = newMat(dim,dim);
-    Lt = newMat(dim,dim);
-    D = newVec(dim);
+    D = newMat(dim,dim);
     b = newVec(dim);
     x = newVec(dim);
-    y = newVec(dim);
-    z = newVec(dim);
     for(int i=0;i<dim;i++){
-        D[i] = 0;
+        
         b[i] = 0;
         x[i] = 0;
-        y[i] = 0;
-        z[i] = 0;
 
         for(int j=0;j<dim;j++){
             A[i][j] = 0;
             L[i][j] = 0;
-            Lt[i][j] = 0;
+            D[i][j] = 0;
         }
     }
 }
@@ -136,98 +137,63 @@ void LDLT::factrizeA(){
     float sum = 0;
     for(int i=0;i<dim;i++){
         L[i][i] = 1;
-        Lt[i][i] = 1;
 
         for(int j=0;j<i;j++){
             sum=0;
             for(int k=0;k<=j-1;k++){
-                sum += L[i][k]*D[k]*L[j][k];
+                sum += L[i][k]*D[k][k]*L[j][k];
             }
-            L[i][j] = (A[i][j] - sum)/D[j];
+            L[i][j] = (A[i][j] - sum)/D[j][j];
             // get D[i]
         }
 
             sum = 0;
-            //cout << D[j] << " ";
 
-            // get L[i][j]
             for(int k=0;k<=(i-1);k++){
-                sum += L[i][k]*D[k]*L[i][k];
+                sum += L[i][k]*D[k][k]*L[i][k];
             }
-            D[i] = A[i][i] - sum;
-
-            //cout << L[i][j] << " ";
-        //cout << endl;
+            D[i][i] = A[i][i] - sum;
     }
 }
 
-void LDLT::computeZ(){
-    float sum =0;
-    for(int i=0;i<dim;i++){
-        sum = 0;
-        for(int k=0;k<=i-1;k++){
-            sum+= L[i][k]*z[k];
-        }
-        z[i] = b[i] - sum;
+void LDLT::solveTriangInf(float **mat, float *vec){
+    float s(0);
+    int i(0), j(0);
+    for(i=0; i<dim; i++){    /// de haut en bas
+        for(j=0, s=0; j<i; j++)
+            s += (mat[i][j]*x[j]);
+        x[i] = (vec[i]-s)/mat[i][i];
     }
+
 }
 
-void LDLT::computeY(){
-    for(int i=0;i<dim;i++){
-        y[i] = z[i]/D[i];
-    }
+void LDLT::transpose(float **mat){
+    for(int i = 0; i<dim; i++)
+        for (int j = 0; j<dim; j++){
+            mat[i][j] = mat[j][i];
+        }  
 }
 
-void LDLT::computeX(){
-    float sum = 0;
-    for (int i=dim-1;i>=0;i--){
-        for (int k=i;k>=0;k--){
-            sum += L[k][i]*x[k];
-        }
-        x[i] = y[i] - sum;
+void LDLT::solveTriangSup(float **mat, float *vec){
+    float s(0);
+    int i(0), j(0);
+    for(i=dim-1; i>=0; i--){    /// de bas en haut
+        for(j=i+1, s=0; j<int(dim); j++)
+            s += (mat[i][j]*x[j]);
+        x[i] = (vec[i]-s)/mat[i][i];
     }
 }
 
 void LDLT::solve(){
     loadAb();
     factrizeA();
-    displayMat(L);
-    displayVec(D);
 
-    computeZ();
-    computeY();
-    computeX();
+    // computeZ();
+    // computeY();
+    // computeX();
+    solveTriangInf(L, b); //on resout L.x = b
+    solveTriangInf(D, x); // on resout D.x = x
+    transpose(L); // on transpose L pour avoir Lt
+    solveTriangSup(L, x); // on resout Lt.x = x
     displayVec(x);
 }
-
-    //
-    /*
-    {
-     solver.loadAb();
-    // cout << "La matrice A :" << endl;
-    // displayMat(solver.A);
-    // cout << "Le vecteur b :" << endl;
-    // displayVec(solver.b);
-
-    // // solver.factrizeA();
-    // // solver.computeZ();
-
-    // // cout << " D :" << endl;
-    // // // displayVec(solver.D);
-
-    // // cout << " z :" << endl;
-    // // displayVec(solver.z);
-
-    // solver.computeY();
-    // // cout << " y :" << endl;
-    // // displayVec(solver.y);
-
-    // solver.computeX();
-    // cout << " x :" << endl;
-    // displayVec(solver.x);
-    // // cout << endl;
-    // // displayMat(solver.L);
-    // // cout << endl;
-    // // displayMat(solver.Lt);
-    // 
-    }*/
