@@ -187,18 +187,16 @@ void LDLT::factrizeA(){
             //     L[i][j] = 0;
             // else
                 L[i][j] = (A[i][j] - sum)/D[j][j];
-                cout << L[i][j] << endl;
-            // get D[i];
         }
 
             sum = 0;
 
-            for(int k = p_i[i];k<=(i-1);k++){
-                // eviter de depenser le calcule pour des zero
-                if(L[i][k]!=0)
-                    sum += L[i][k]*D[k][k]*L[i][k];
-            }
-            D[i][i] = A[i][i] - sum;
+        for(int k = p_i[i];k<=(i-1);k++){
+            // eviter de depenser le calcule pour des zero
+            if(L[i][k]!=0)
+                sum += L[i][k]*D[k][k]*L[i][k];
+        }
+        D[i][i] = A[i][i] - sum;
     }
 }
 
@@ -258,8 +256,13 @@ void LDLT::solve(){
     cout << "\nProfil de A :" << endl;
     computeP_i();         // tracer le profil
 
+    
+    factrizeA();          // calculer les valeurs de L et D 
+    
+    // A et L n bien le mem prfil
     profil(A,"A");
-    factrizeA();
+    profil(L,"L");
+
 
     solveTriangInf(L, b); //on resout L.x = b
     solveTriangInf(D, x); // on resout D.x = x
@@ -278,7 +281,7 @@ void LDLT::profil(float** mat, string name){
         // eviter de faire un boucle de plus
         bool logicNull = true;
         for(int j=0;j<=i; j++){
-            if(A[i][j]==0){
+            if(mat[i][j]==0){
                 if(logicNull)
                     continue;
                 else
@@ -293,4 +296,3 @@ void LDLT::profil(float** mat, string name){
     }
     cout << endl;
 }
-
