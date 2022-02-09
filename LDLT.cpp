@@ -6,25 +6,36 @@
  * 
  */
 
-#include <iostream>
-#include <fstream>
-#include <string>
+#include <iostream>     // bibliothèque standard d'entrE et de sortie
+#include <fstream>      // bibliothèque d'entrE et de sortie pour les fichier
+#include <string>       // bibliotheque de manipulation de chaine de charactere
 
-using namespace std;
+using namespace std;    // utiliser l'espace de nom standard std
 
 
-int dim(10);
+int dim(10);            // definir la taille du systeme 
 
-float **newMat(int rows, int cols);
-float *newVec(int n);
-void displayMat(float** mat);
-void displayVec (float* v);
+/*
+    Allocation/Affichage de matrice et de vecteur
+*/
+
+float **newMat(int rows, int cols);     // creer une matrice rows x cols
+float *newVec(int n);                   // creer un vecteur de taille n
+void displayMat(float** mat);           // afficher une matrice de mat
+void displayVec (float* v);             // afficher un vecteur 
+
+/*
+ *
+ *  CLASS: LDLt
+ * 
+ * 
+*/
 
 class LDLT{
 // Methods
 public:
     LDLT();
-
+    ~LDLT();
     void loadAb();
     void computeP_i();
     void factrizeA();
@@ -54,16 +65,27 @@ private:
     float* p_i;  // indice des premieres element non null
 };
 
+/*
+ *
+ *  MAIN
+ * 
+ * 
+*/
+
 int main (){
+    // initialiser une instance de LDLt 
     LDLT solver;
 
+    // Interface Utilisateur
     cout << "____________________________________" << endl;
     cout << "\n  Factorisation LDLt et Resolution " << endl;
     cout << "____________________________________" << endl << endl;
 
     cout << "Factoriser une matrice symetric positive A\n tq: A = L.D.Lt"<< endl<< endl;
+    // factorisation et resolution
     solver.solve();
 
+    // succes de l'execution
     return 0;
 }
 
@@ -99,7 +121,12 @@ void displayVec (float* v){         //afficher un vecteur
 }
 
 
-/***** LDLT ******/
+/*
+ *
+ *  DEFINITION : METHODE LDLT
+ * 
+ * 
+*/
 
 LDLT::LDLT(){
     // Allcation des matrice et des vecteurs
@@ -295,4 +322,18 @@ void LDLT::profil(float** mat, string name){
         cout << endl;
     }
     cout << endl;
+}
+
+Lsolver::~Lsolver(){
+	delete[] x;
+	delete[] b;
+
+	for(int i=0; i< dim; i++){
+        delete[] D[i];
+        delete[] A[i];
+        delete[] L[i];
+    }
+    delete[] D;
+    delete[] A;
+    delete[] L;
 }
