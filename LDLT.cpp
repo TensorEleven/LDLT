@@ -302,6 +302,7 @@ void LDLT::solve(){
     displayVec(x);                   // afficher le resultat
 }
 
+// afficher le profi de la matrice mat
 void LDLT::profil(float** mat, string name){
     cout << "Profil de la matrice " << name << " :"<< endl;
     for(int i=0;i<dim;i++){
@@ -324,7 +325,9 @@ void LDLT::profil(float** mat, string name){
     cout << endl;
 }
 
-Lsolver::~Lsolver(){
+// destructeur 
+
+LDLT::~LDLT(){
 	delete[] x;
 	delete[] b;
 
