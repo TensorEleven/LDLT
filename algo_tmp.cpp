@@ -96,6 +96,7 @@ void Profil::factorisation()
         AP[nDiag[i]] = AP[nDiag[i]] - s;
     }
 }
+
 void Profil::VectorDouble(vector<double> & double_){
 	vector<double>::iterator it;
 	
@@ -110,6 +111,7 @@ void Profil::VectorInt(vector<int> & int_){
           cout<< *it <<" ";     
 	}
 }
+
 void Profil::APi_nDiag(){
 	int d(0);
 	
@@ -128,8 +130,8 @@ void Profil::APi_nDiag(){
 		}
 	}
 	
-	 l = new int[dim];
-	 p = new int[dim];
+	l = new int[dim];
+	p = new int[dim];
 	l[0] = 0;
 	p[0] = 0;
 	for(int i = 1; i<dim; i++){
@@ -137,6 +139,7 @@ void Profil::APi_nDiag(){
 		p[i] = i - l[i] + 1 - 1;
 	}
 }
+
 void Profil::display1D(double *Matrix, int taille, string title){
 	cout<<endl<<"__________"<<title <<"______________"<<endl;
 	for(int i=0;i<taille;i++){

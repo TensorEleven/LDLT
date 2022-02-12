@@ -9,6 +9,7 @@
 #include <iostream>     // bibliothèque standard d'entrE et de sortie
 #include <fstream>      // bibliothèque d'entrE et de sortie pour les fichier
 #include <string>       // bibliotheque de manipulation de chaine de charactere
+#include <vector>
 
 using namespace std;    // utiliser l'espace de nom standard std
 
@@ -38,6 +39,7 @@ public:
     ~LDLT();
     void loadAb();
     void computeP_i();
+    void APi_nDiag();
     void factrizeA();
 
     // getter
@@ -53,6 +55,9 @@ public:
     void profil(float** mat, string name);
     void getProfil(float* mat, string name);
     void solve();
+    vector<double> AP = { };
+	vector<int> nDiag = { };
+	int *l, *p;
 
 // Attributs
 private:
@@ -326,6 +331,34 @@ void LDLT::profil(float** mat, string name){
 }
 
 // destructeur 
+
+void LDLT::APi_nDiag(){
+	int d(0);
+	
+	for(int i=0; i<dim; i++){
+		for(int j=0; j<=i; j++){
+			if(A[i][j] != 0){
+				for(int k=j; k<=i; k++){
+					 AP.push_back(A[i][k]);
+					 d++;
+					 if(k == i){
+						nDiag.push_back(d - 1);
+					 }					 
+				}
+				break;			
+			}
+		}
+	}
+	
+	l = new int[dim];
+	p = new int[dim];
+	l[0] = 0;
+	p[0] = 0;
+	for(int i = 1; i<dim; i++){
+		l[i] = nDiag[i] - nDiag[i-1] -1;
+		p[i] = i - l[i] + 1 - 1;
+	}
+}
 
 LDLT::~LDLT(){
 	delete[] x;
