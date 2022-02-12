@@ -47,6 +47,8 @@ public:
     float* getb(){return b;}
     float** getD(){return D;}
     float* getX(){return x;}
+    float getAp(int i, int j);
+    void setAp(int i, int j, float val);
 
     void solveTriangInf(float **mat, float *vec); 
     void transpose(float **mat);
@@ -55,8 +57,9 @@ public:
     void profil(float** mat, string name);
     void getProfil(float* mat, string name);
     void solve();
-    vector<double> AP = { };
-	vector<int> nDiag = { };
+    void gaussSolve();
+    vector<float> AP = {};
+	vector<int> nDiag = {};
 	int *l, *p;
 
 // Attributs
@@ -200,35 +203,24 @@ void LDLT::computeP_i(){
 }
 
 // determiner la valeur de L et D avec A = L.D.Lt
-void LDLT::factrizeA(){
-    float sum = 0;
-    for(int i=0;i<dim;i++){
-        L[i][i] = 1;
-
-        // commencer les calcule à partir du la première élément non null
-        for(int j=p_i[i];j<i;j++){
-            sum=0;
-            for(int k=p_i[i];k<=j-1;k++){
-                // eviter de depenser le calcule pour des zero
-                if(L[i][k]!=0)
-                    sum += L[i][k]*D[k][k]*L[j][k];
+void LDLT::factrizeA()
+{     
+    float s(0);
+    for (int i(0); i < dim; i++)
+    {
+        for (int j(0); j < i; j++)
+        {
+            s = 0;
+            for (int k(0); k < j; k++){
+                s+= getAp(i, k) * AP[nDiag[k]] * getAp(j,k);
             }
-
-            // L conserve le profil de A
-            // if(A[i][j]==0)              // 
-            //     L[i][j] = 0;
-            // else
-                L[i][j] = (A[i][j] - sum)/D[j][j];
+            setAp(i,j, (getAp(i,j) - s) / AP[nDiag[j]]);
         }
-
-            sum = 0;
-
-        for(int k = p_i[i];k<=(i-1);k++){
-            // eviter de depenser le calcule pour des zero
-            if(L[i][k]!=0)
-                sum += L[i][k]*D[k][k]*L[i][k];
+        s = 0;
+        for (int k(0); k < i; k++){
+            s+= AP[nDiag[k]] * getAp(i,k) * getAp(i,k);
         }
-        D[i][i] = A[i][i] - sum;
+        AP[nDiag[i]] = AP[nDiag[i]] - s;
     }
 }
 
@@ -295,14 +287,9 @@ void LDLT::solve(){
     profil(A,"A");
     profil(L,"L");
 
+    APi_nDiag();    
 
-    solveTriangInf(L, b); //on resout L.x = b
-    solveTriangInf(D, x); // on resout D.x = x
-
-    //transpose(L); // on transpose L pour avoir Lt
-    //solveTriangSup(L, x); // on resout Lt.x = x
-
-    solveTriangSupNoTranspose(L, x); // Résoudre Lt.x = x sans passer par le transpose
+    gaussSolve();
     cout << "La solution du systeme est :"<< endl;
     displayVec(x);                   // afficher le resultat
 }
@@ -330,8 +317,6 @@ void LDLT::profil(float** mat, string name){
     cout << endl;
 }
 
-// destructeur 
-
 void LDLT::APi_nDiag(){
 	int d(0);
 	
@@ -358,6 +343,47 @@ void LDLT::APi_nDiag(){
 		l[i] = nDiag[i] - nDiag[i-1] -1;
 		p[i] = i - l[i] + 1 - 1;
 	}
+}
+
+float LDLT::getAp(int i, int j){
+	
+	if(j >= p[i] && j<=i){
+		return AP[nDiag[i] - i + j];
+	}	
+	else 
+	return 0;
+}
+
+void LDLT::setAp(int i, int j, float val){
+	if(j >= p[i]) AP[nDiag[i] - i + j] = val;
+}
+
+void LDLT::gaussSolve(){
+/// Solve L.x = b
+    float s(0);
+    for (int i(0); i < dim; i++){
+        s = 0;
+        for (int j(0); j < i; j++)
+        {
+            s += getAp(i,j) * x[j];
+        }
+        x[i] = (b[i] - s);
+    }
+    
+/// Solve D.x = x
+    for (int i(0); i < dim; i++){
+        x[i] = x[i] / AP[nDiag[i]];
+    }
+   
+/// Solve  Lt.x = y
+    for (int i(dim - 1); i >= 0; i--){
+        s = 0;
+        for (int j(dim - 1); j > i; j--)
+        {
+            s += getAp(j, i) * x[j];
+        }
+        x[i] = (x[i] - s);
+    }
 }
 
 LDLT::~LDLT(){
