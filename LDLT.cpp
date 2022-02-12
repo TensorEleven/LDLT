@@ -50,9 +50,10 @@ public:
     float getAp(int i, int j);
     void setAp(int i, int j, float val);
 
-    void solveTriangInf(float **mat, float *vec); 
+    void solveTriangInf();
+    void solveDiag();
     void transpose(float **mat);
-	void solveTriangSup(float **mat, float *vec);
+	void solveTriangSup();
     void solveTriangSupNoTranspose(float **mat, float *vec);
     void profil(float** mat, string name);
     void getProfil(float* mat, string name);
@@ -224,18 +225,26 @@ void LDLT::factrizeA()
     }
 }
 
-// resolution d'un system a diagonal inferieur
-void LDLT::solveTriangInf(float **mat, float *vec){
+// solve L.x = b
+void LDLT::solveTriangInf(){
     float s(0);
-    int i(0), j(0);
-    for(i=0; i<dim; i++){    /// de haut en bas
-        for(j=0, s=0; j<i; j++)
-            s += (mat[i][j]*x[j]);
-        x[i] = (vec[i]-s)/mat[i][i];
+    for (int i(0); i < dim; i++)
+    {
+        s = 0;
+        for (int j(0); j < i; j++)
+        {
+            s += getAp(i,j) * x[j];
+        }
+        x[i] = (b[i] - s);
     }
-
 }
 
+// solve D.x = x
+void LDLT::solveDiag(){
+    for (int i(0); i < dim; i++){
+        x[i] = x[i] / AP[nDiag[i]];
+    }
+}
 // methode de transposition
 void LDLT::transpose(float **mat){
     for(int i = 0; i<dim; i++)
@@ -245,13 +254,15 @@ void LDLT::transpose(float **mat){
 }
 
 // resolution d'un system a diagonal superieur
-void LDLT::solveTriangSup(float **mat, float *vec){
+void LDLT::solveTriangSup(){
     float s(0);
-    int i(0), j(0);
-    for(i=dim-1; i>=0; i--){    /// de bas en haut
-        for(j=i+1, s=0; j<int(dim); j++)
-            s += (mat[i][j]*x[j]);
-        x[i] = (vec[i]-s)/mat[i][i];
+    for (int i(dim - 1); i >= 0; i--){
+        s = 0;
+        for (int j(dim - 1); j > i; j--)
+        {
+            s += getAp(j, i) * x[j];
+        }
+        x[i] = (x[i] - s);
     }
 }
 
@@ -289,7 +300,10 @@ void LDLT::solve(){
 
     APi_nDiag();    
 
-    gaussSolve();
+    solveTriangInf();
+    solveDiag();
+    solveTriangSup();
+
     cout << "La solution du systeme est :"<< endl;
     displayVec(x);                   // afficher le resultat
 }
@@ -356,34 +370,6 @@ float LDLT::getAp(int i, int j){
 
 void LDLT::setAp(int i, int j, float val){
 	if(j >= p[i]) AP[nDiag[i] - i + j] = val;
-}
-
-void LDLT::gaussSolve(){
-/// Solve L.x = b
-    float s(0);
-    for (int i(0); i < dim; i++){
-        s = 0;
-        for (int j(0); j < i; j++)
-        {
-            s += getAp(i,j) * x[j];
-        }
-        x[i] = (b[i] - s);
-    }
-    
-/// Solve D.x = x
-    for (int i(0); i < dim; i++){
-        x[i] = x[i] / AP[nDiag[i]];
-    }
-   
-/// Solve  Lt.x = y
-    for (int i(dim - 1); i >= 0; i--){
-        s = 0;
-        for (int j(dim - 1); j > i; j--)
-        {
-            s += getAp(j, i) * x[j];
-        }
-        x[i] = (x[i] - s);
-    }
 }
 
 LDLT::~LDLT(){
