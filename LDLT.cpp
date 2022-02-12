@@ -54,7 +54,6 @@ public:
     void solveDiag();
     void transpose(float **mat);
 	void solveTriangSup();
-    void solveTriangSupNoTranspose(float **mat, float *vec);
     void profil(float** mat, string name);
     void getProfil(float* mat, string name);
     void solve();
@@ -266,48 +265,6 @@ void LDLT::solveTriangSup(){
     }
 }
 
-// Résoudre sans faire de transpose
-void LDLT::solveTriangSupNoTranspose(float **mat, float *vec){
-    float s(0);
-    int i(0), j(0);
-    for(i=dim-1; i>=0; i--){        // de bas en haut
-        for(j=i+1, s=0; j<int(dim); j++)
-            s += (mat[j][i]*x[j]);  // récupérer la symétrie au lieu de mat[i][j]
-        x[i] = (vec[i]-s)/mat[i][i];
-    }
-}
-
-void LDLT::solve(){
-    // charger les donner dempuis les fichier
-    loadAb();
-    
-    // Interface
-    cout << "La matrice A :" << endl;
-    displayMat(A);
-    
-    cout << "\nLe second membre :" << endl;
-    displayVec(b);
-
-    cout << "\nProfil de A :" << endl;
-    computeP_i();         // tracer le profil
-
-    
-    factrizeA();          // calculer les valeurs de L et D 
-    
-    // A et L n bien le mem prfil
-    profil(A,"A");
-    profil(L,"L");
-
-    APi_nDiag();    
-
-    solveTriangInf();
-    solveDiag();
-    solveTriangSup();
-
-    cout << "La solution du systeme est :"<< endl;
-    displayVec(x);                   // afficher le resultat
-}
-
 // afficher le profi de la matrice mat
 void LDLT::profil(float** mat, string name){
     cout << "Profil de la matrice " << name << " :"<< endl;
@@ -370,6 +327,42 @@ float LDLT::getAp(int i, int j){
 
 void LDLT::setAp(int i, int j, float val){
 	if(j >= p[i]) AP[nDiag[i] - i + j] = val;
+}
+
+// Appeler par etape les methodes de resolutions
+void LDLT::solve(){
+    // charger les donner dempuis les fichier
+    loadAb();
+    
+    // Interface
+    cout << "La matrice A :" << endl;
+    displayMat(A);
+    
+    cout << "\nLe second membre :" << endl;
+    displayVec(b);
+
+    cout << "\nProfil de A :" << endl;
+    computeP_i();         // tracer le profil
+
+    // calculer les valeurs de L et D 
+    factrizeA(); 
+    
+    // A et L n bien le mem prfil
+    profil(A,"A");
+    profil(L,"L");
+
+    // charger nDiag et AP
+    APi_nDiag();    
+
+    // resoudre L.x = b
+    solveTriangInf();
+    // resoudre D.x = x
+    solveDiag();
+    // resoudre D.x = x
+    solveTriangSup();
+
+    cout << "La solution du systeme est :"<< endl;
+    displayVec(x);                   // afficher le resultat
 }
 
 LDLT::~LDLT(){
