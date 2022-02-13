@@ -10,6 +10,7 @@
 #include <fstream>      // bibliothèque d'entrE et de sortie pour les fichier
 #include <string>       // bibliotheque de manipulation de chaine de charactere
 #include <vector>
+#include <iomanip>
 
 using namespace std;    // utiliser l'espace de nom standard std
 
@@ -39,8 +40,9 @@ public:
     ~LDLT();
     void loadAb();
     void computeP_i();
-    void APi_nDiag();
+    void computeAp_nDiag();
     void factrizeA();
+    void computeX();
 
     // getter
     float** getA(){return A;}
@@ -52,15 +54,16 @@ public:
 
     void solveTriangInf();
     void solveDiag();
-    void transpose(float **mat);
 	void solveTriangSup();
+
     void profil(float** mat, string name);
     void getProfil(float* mat, string name);
     void solve();
     void gaussSolve();
     vector<float> AP = {};
-	vector<int> nDiag = {};
-	int *l, *p;
+	vector<int> l = {};
+	vector<int> p = {};
+    vector<int> nDiag;
 
 // Attributs
 private:
@@ -161,7 +164,7 @@ void LDLT::loadAb(){
 
         // recuperer la partie inférieure avec le duagonal de la matrice
         for(int i=0; i<dim;i++){
-            for(int j=0; j<=i;j++){
+            for(int j=0; j<dim;j++){
                 inFile >> A[i][j];
             }
         }  
@@ -203,24 +206,24 @@ void LDLT::computeP_i(){
 }
 
 // determiner la valeur de L et D avec A = L.D.Lt
-void LDLT::factrizeA()
-{     
-    float s(0);
-    for (int i(0); i < dim; i++)
-    {
-        for (int j(0); j < i; j++)
-        {
-            s = 0;
-            for (int k(0); k < j; k++){
-                s+= getAp(i, k) * AP[nDiag[k]] * getAp(j,k);
+void LDLT::factrizeA(){     
+    float sum = 0;
+    for (int i=0; i<dim; i++){
+        for(int j=0; j<i; j++){
+            sum = 0;
+            for(int k=0; k<j; k++){
+                if (k>=p[i] && k>= p[j])
+                    sum += AP[nDiag[i]-i+k]*AP[nDiag[k]]*AP[nDiag[j]-j+k];
             }
-            setAp(i,j, (getAp(i,j) - s) / AP[nDiag[j]]);
+            if(j>=p[i] && j>=p[j])
+                AP[nDiag[i]-i+j] = (1/AP[nDiag[j]])*(AP[nDiag[i]-i+j] - sum);
         }
-        s = 0;
-        for (int k(0); k < i; k++){
-            s+= AP[nDiag[k]] * getAp(i,k) * getAp(i,k);
+        sum = 0; 
+        for (int k=0; k<i; k++){
+            if (k>=p[i])
+                sum += AP[nDiag[k]]*(AP[nDiag[i]-i+k]*AP[nDiag[i]-i+k]);
         }
-        AP[nDiag[i]] = AP[nDiag[i]] - s;
+        AP[nDiag[i]] = AP[nDiag[i]] - sum;
     }
 }
 
@@ -243,13 +246,6 @@ void LDLT::solveDiag(){
     for (int i(0); i < dim; i++){
         x[i] = x[i] / AP[nDiag[i]];
     }
-}
-// methode de transposition
-void LDLT::transpose(float **mat){
-    for(int i = 0; i<dim; i++)
-        for (int j = 0; j<dim; j++){
-            mat[i][j] = mat[j][i];
-        }  
 }
 
 // resolution d'un system a diagonal superieur
@@ -288,32 +284,76 @@ void LDLT::profil(float** mat, string name){
     cout << endl;
 }
 
-void LDLT::APi_nDiag(){
-	int d(0);
-	
-	for(int i=0; i<dim; i++){
-		for(int j=0; j<=i; j++){
-			if(A[i][j] != 0){
-				for(int k=j; k<=i; k++){
-					 AP.push_back(A[i][k]);
-					 d++;
-					 if(k == i){
-						nDiag.push_back(d - 1);
-					 }					 
-				}
-				break;			
-			}
-		}
-	}
-	
-	l = new int[dim];
-	p = new int[dim];
-	l[0] = 0;
-	p[0] = 0;
-	for(int i = 1; i<dim; i++){
-		l[i] = nDiag[i] - nDiag[i-1] -1;
-		p[i] = i - l[i] + 1 - 1;
-	}
+void LDLT::computeAp_nDiag(){
+	ifstream file("data.txt", ios::in);
+    if (file){
+        file >> dim;
+
+        // Initialisations depuis le fichier
+        int ji(0);
+        int count(-1); // Une variable qui va numeroter les éléments du profil
+        float elt(0);
+        char car('c');
+
+        for(int_fast16_t i=0; i<dim; i++){
+            ji = 0; 
+            elt = 0;
+
+            // Prendre seulement les éléments du profil
+            for(int_fast16_t j=0; j<=i; j++){
+                file >> elt;
+                if (elt != 0 || ji != 0){
+                    ji++;
+                    if(ji == 1){
+                        p.push_back(j);
+                        l.push_back(i-j);
+                    }
+                }
+                if(ji){
+                    count++;
+                    AP.push_back(elt);
+                    if( i == j){
+                        nDiag.push_back(count);
+                    }
+                }
+            }            
+            // Boucler jusqu'au dernier élément de la ligne
+            while(car != '\n'){
+                file.get(car);
+            }
+            car = 'c';
+        }
+
+        for(int_fast16_t i=0; i<dim; i++){
+            file >> b[i];
+        }
+    }
+}
+
+void LDLT::computeX(){
+    // D'abord Lx = b
+    float sum(0);
+    for(int i=0; i<dim; i++){
+        sum = 0;
+        for(int j=0; j<i; j++){
+            if(j>=p[i])
+                sum += AP[nDiag[i]-i+j]*x[j];
+        }
+        x[i] = b[i] - sum;
+    }
+    // Puis Dx = x
+    for(int i=0; i<dim; i++){
+        x[i] = (1/AP[nDiag[i]])*x[i];
+    }
+    // Enfin Ltx = x
+    for(int i= int(dim-1); i>=0; i--){
+        sum = 0;
+        for(int j=i+1; j<dim; j++){
+            if(i>=int(p[j]))
+                sum += AP[nDiag[j]-j+i]*x[j];
+        }
+        x[i] = x[i]-sum;
+    }
 }
 
 float LDLT::getAp(int i, int j){
@@ -344,31 +384,28 @@ void LDLT::solve(){
     cout << "\nProfil de A :" << endl;
     computeP_i();         // tracer le profil
 
+    computeAp_nDiag();
     // calculer les valeurs de L et D 
     factrizeA(); 
     
     // A et L n bien le mem prfil
     profil(A,"A");
-    profil(L,"L");
 
-    // charger nDiag et AP
-    APi_nDiag();    
-
-    // resoudre L.x = b
-    solveTriangInf();
-    // resoudre D.x = x
-    solveDiag();
-    // resoudre D.x = x
-    solveTriangSup();
+    computeX();  
 
     cout << "La solution du systeme est :"<< endl;
     displayVec(x);                   // afficher le resultat
 }
 
+// liberation de memoire apres execution
 LDLT::~LDLT(){
 	delete[] x;
 	delete[] b;
+    l.clear();
+    p.clear();
 
+    AP.clear();
+    nDiag.clear();
 	for(int i=0; i< dim; i++){
         delete[] D[i];
         delete[] A[i];
