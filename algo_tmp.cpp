@@ -207,7 +207,7 @@ Profil::Profil(string _filename){
 }
 int main(){
 	
-	Profil profil("Matrix.txt");
+	Profil profil("matrix.txt");
 	cout<<"This is the resolution of the system Ax= b"<<endl;
 	profil.getData();
 	

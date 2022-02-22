@@ -41,7 +41,7 @@ public:
     void loadAb();
     void computeP_i();
     void computeAp_nDiag();
-    void factrizeA();
+    void computeAP();
     void computeX();
 
     // getter
@@ -205,61 +205,6 @@ void LDLT::computeP_i(){
     cout << endl;
 }
 
-// determiner la valeur de L et D avec A = L.D.Lt
-void LDLT::factrizeA(){     
-    float sum = 0;
-    for (int i=0; i<dim; i++){
-        for(int j=0; j<i; j++){
-            sum = 0;
-            for(int k=0; k<j; k++){
-                if (k>=p[i] && k>= p[j])
-                    sum += AP[nDiag[i]-i+k]*AP[nDiag[k]]*AP[nDiag[j]-j+k];
-            }
-            if(j>=p[i] && j>=p[j])
-                AP[nDiag[i]-i+j] = (1/AP[nDiag[j]])*(AP[nDiag[i]-i+j] - sum);
-        }
-        sum = 0; 
-        for (int k=0; k<i; k++){
-            if (k>=p[i])
-                sum += AP[nDiag[k]]*(AP[nDiag[i]-i+k]*AP[nDiag[i]-i+k]);
-        }
-        AP[nDiag[i]] = AP[nDiag[i]] - sum;
-    }
-}
-
-// solve L.x = b
-void LDLT::solveTriangInf(){
-    float s(0);
-    for (int i(0); i < dim; i++)
-    {
-        s = 0;
-        for (int j(0); j < i; j++)
-        {
-            s += getAp(i,j) * x[j];
-        }
-        x[i] = (b[i] - s);
-    }
-}
-
-// solve D.x = x
-void LDLT::solveDiag(){
-    for (int i(0); i < dim; i++){
-        x[i] = x[i] / AP[nDiag[i]];
-    }
-}
-
-// resolution d'un system a diagonal superieur
-void LDLT::solveTriangSup(){
-    float s(0);
-    for (int i(dim - 1); i >= 0; i--){
-        s = 0;
-        for (int j(dim - 1); j > i; j--)
-        {
-            s += getAp(j, i) * x[j];
-        }
-        x[i] = (x[i] - s);
-    }
-}
 
 // afficher le profi de la matrice mat
 void LDLT::profil(float** mat, string name){
@@ -285,7 +230,7 @@ void LDLT::profil(float** mat, string name){
 }
 
 void LDLT::computeAp_nDiag(){
-	ifstream file("data.txt", ios::in);
+	ifstream file("matrix.txt", ios::in);
     if (file){
         file >> dim;
 
@@ -330,6 +275,28 @@ void LDLT::computeAp_nDiag(){
     }
 }
 
+// determiner la valeur de L et D avec A = L.D.Lt
+void LDLT::computeAP(){     
+    float sum = 0;
+    for (int i=0; i<dim; i++){
+        for(int j=0; j<i; j++){
+            sum = 0;
+            for(int k=0; k<j; k++){
+                if (k>=p[i] && k>= p[j])
+                    sum += AP[nDiag[i]-i+k]*AP[nDiag[k]]*AP[nDiag[j]-j+k];
+            }
+            if(j>=p[i] && j>=p[j])
+                AP[nDiag[i]-i+j] = (1/AP[nDiag[j]])*(AP[nDiag[i]-i+j] - sum);
+        }
+        sum = 0; 
+        for (int k=0; k<i; k++){
+            if (k>=p[i])
+                sum += AP[nDiag[k]]*(AP[nDiag[i]-i+k]*AP[nDiag[i]-i+k]);
+        }
+        AP[nDiag[i]] = AP[nDiag[i]] - sum;
+    }
+}
+
 void LDLT::computeX(){
     // D'abord Lx = b
     float sum(0);
@@ -371,7 +338,7 @@ void LDLT::setAp(int i, int j, float val){
 
 // Appeler par etape les methodes de resolutions
 void LDLT::solve(){
-    // charger les donner dempuis les fichier
+    // 1 - charger les donner dempuis les fichier
     loadAb();
     
     // Interface
@@ -382,15 +349,14 @@ void LDLT::solve(){
     displayVec(b);
 
     cout << "\nProfil de A :" << endl;
-    computeP_i();         // tracer le profil
+    computeP_i(); // tracer le profil
 
+    // 2 - calcule de nDiag, l et p
     computeAp_nDiag();
-    // calculer les valeurs de L et D 
-    factrizeA(); 
+    // 3 - Ajouter les Valeur de AP 
+    computeAP(); 
     
-    // A et L n bien le mem prfil
-    profil(A,"A");
-
+    // 4 - Calculen de la solution
     computeX();  
 
     cout << "La solution du systeme est :"<< endl;
